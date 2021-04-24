@@ -16,7 +16,6 @@
 <sup>4</sup>[King Abdullah University of Science and Technology](https://www.kaust.edu.sa/en)
 
 ## Link to [Code](https://github.com/CDInstitute/Building-Dataset-Generator)
-!<-- Need to add link to paper and downloadable dataset-->
 
 ## Abstract 
 With the growing interest in deep learning algorithms and computational design in the architectural field, the need for large, accessible and diverse architectural datasets increases. Due to the complexity of such 3D datasets, the most widespread techniques of 3D scanning and manual building modeling are very time-consuming, which does not allow to have a sufficiently large open-source dataset. 
