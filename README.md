@@ -1,37 +1,30 @@
-## Welcome to GitHub Pages
+![Screenshot from 2021-04-24 14-09-21](https://user-images.githubusercontent.com/30972206/115953003-bdf0e500-a506-11eb-8e12-f8b3772bae22.png)
 
-You can use the [editor on GitHub](https://github.com/CDInstitute/Building-Dataset-Generator/edit/gh-pages/README.md) to maintain and preview the content for your website in Markdown files.
+# Synthetic 3D Data Generation Pipeline for Geometric Deep Learning in Architecture
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+[Stanislava Fedorova](https://www.linkedin.com/in/stanislava-fedorova/)<sup>1</sup>,
+[Alberto Tono](https://www.linkedin.com/in/albertotono3/)<sup>2</sup>,
+[Meher Shashwat Nigam](https://www.linkedin.com/in/mehershashwatnigam/)<sup>3</sup>, 
+[Jiayao Zhang](https://www.linkedin.com/in/jiayao-zhang-773045159/)<sup>4</sup>,
+[Amirhossein Ahmadnia](https://www.linkedin.com/in/amirhossein-ahmadnia-4b4bb117b/)<sup>1</sup>,
+[Cecilia bolognesi](https://www.linkedin.com/in/cecilia-bolognesi-99914283/)<sup>1</sup>,
+[Dominik L. Michels](https://www.linkedin.com/in/dominik-l-michels/)<sup>4</sup>
 
-### Markdown
+<sup>1</sup>[Politecnico di Milano, MIlan](https://www.polimi.it/en/),
+<sup>2</sup>[Computational Design Institute, San Francisco](https://sfcdi.org/),
+<sup>3</sup>[International Institute of Information Technology, Hyderabad](https://www.iiit.ac.in/),
+<sup>4</sup>[King Abdullah University of Science and Technology](https://www.kaust.edu.sa/en)
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+## Link to [Code](https://github.com/CDInstitute/Building-Dataset-Generator)
+!<-- Need to add link to paper and downloadable dataset-->
 
-```markdown
-Syntax highlighted code block
+## Abstract 
+With the growing interest in deep learning algorithms and computational design in the architectural field, the need for large, accessible and diverse architectural datasets increases. Due to the complexity of such 3D datasets, the most widespread techniques of 3D scanning and manual building modeling are very time-consuming, which does not allow to have a sufficiently large open-source dataset. 
+We decided to tackle this problem by constructing a field-specific synthetic data generation pipeline that generates an arbitrary amount of 3D data along with the associated 2D and 3D annotations. The variety of annotations, the flexibility to customize the generated building and dataset parameters make this framework suitable for multiple deep dearning tasks, including geometric deep learning that requires direct 3D supervision. Creating our building data generation pipeline we leveraged the experts' architectural knowledge in order to construct a framework that would be modular, extendable and would provide a sufficient amount of class-balanced data samples. Moreover, we purposefully involve the researcher in the dataset customization allowing the introduction of additional building components, material textures, building classes, number and type of annotations as well as the number of views per 3D model sample. In this way, the framework would satisfy different research requirements and would be adaptable to a large variety of tasks. All code and data is made publicly available.
 
-# Header 1
-## Header 2
-### Header 3
+![appendix](https://user-images.githubusercontent.com/30972206/115953492-79b31400-a509-11eb-9aac-d4ab74546dc8.png)
 
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/CDInstitute/Building-Dataset-Generator/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+## Contact Information
+- Stanislava Fedorova : stanislava.fedorova@mail.polimi.it
+- Alberto Tono : alberto.tono@cd.institute
+- Meher Shashwat Nigam : meher.shashwat@students.iiit.ac.in
