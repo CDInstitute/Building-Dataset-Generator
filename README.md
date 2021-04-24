@@ -13,8 +13,6 @@
 <sup>3</sup>[International Institute of Information Technology, Hyderabad](https://www.iiit.ac.in/),
 <sup>4</sup>[King Abdullah University of Science and Technology](https://www.kaust.edu.sa/en)
 
-## Link to [Code](https://github.com/CDInstitute/Building-Dataset-Generator)
-
 ## Abstract
 With the growing interest in deep learning algorithms and computational design in the architectural field, the need for large, accessible and diverse architectural datasets increases. We decided to tackle this problem by constructing a field-specific synthetic data generation pipeline that generates an arbitrary amount of 3D data along with the associated 2D and 3D annotations. The variety of annotations, the flexibility to customize the generated building and dataset parameters make this framework suitable for multiple deep dearning tasks, including geometric deep learning that requires direct 3D supervision. Creating our building data generation pipeline we leveraged the experts' architectural knowledge in order to construct a framework that would be modular, extendable and would provide a sufficient amount of class-balanced data samples. Moreover, we purposefully involve the researcher in the dataset customization allowing the introduction of additional building components, material textures, building classes, number and type of annotations as well as the number of views per 3D model sample. In this way, the framework would satisfy different research requirements and would be adaptable to a large variety of tasks. All code and data is made publicly available.
 
