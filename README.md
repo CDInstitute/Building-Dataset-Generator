@@ -1,7 +1,5 @@
 ![Screenshot from 2021-04-24 14-09-21](https://user-images.githubusercontent.com/30972206/115953003-bdf0e500-a506-11eb-8e12-f8b3772bae22.png)
 
-# Synthetic 3D Data Generation Pipeline for Geometric Deep Learning in Architecture
-
 [Stanislava Fedorova](https://www.linkedin.com/in/stanislava-fedorova/)<sup>1</sup>,
 [Alberto Tono](https://www.linkedin.com/in/albertotono3/)<sup>2</sup>,
 [Meher Shashwat Nigam](https://www.linkedin.com/in/mehershashwatnigam/)<sup>3</sup>, 
