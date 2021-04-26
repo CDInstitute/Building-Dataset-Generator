@@ -1,5 +1,5 @@
 # Synthetic Dataset Generator
-
+#### Author: Stanislava Fedorova
 <img src="imgs/illustration.gif" width="1000"/>
 
 This is a tool that generates a dataset of synthetic buildings of different typologies. The generated data includes:
