@@ -3,7 +3,9 @@
 <img src="imgs/illustration1.gif" width="1000"/>
 
 This is a tool that generates a dataset of synthetic buildings of different typologies. 
+
 [Arxiv](https://arxiv.org/pdf/2104.12564v1.pdf) [Website](https://cdinstitute.github.io/Building-Dataset-Generator/) [Samples](https://drive.google.com/drive/folders/1_D9nuNd9VXjzdqMoKIqrET7yiq21uZv6?usp=sharing)
+
 The generated data includes:
 
 * Mesh files of generated buildings, ```.obj``` format
