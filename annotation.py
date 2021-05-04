@@ -90,6 +90,7 @@ class Annotation:
 		                'trans_mat': 0,
 		                'focal_length': 35.0,
 		                'cam_position': (0.0, 0.0, 0.0),
+		                'rotation': (0, 0, 0), # TODO: add camera rotation
 		                'inplane_rotation': 0,
 		                'truncated': False,
 		                'occluded': False,

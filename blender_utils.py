@@ -1,6 +1,25 @@
 import bpy, bmesh
+from copy import copy
+import math
 from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 import numpy as np
+import os
+import sys
+
+file_dir = os.path.dirname(__file__)
+sys.path.append(file_dir)
+
+from iou import IoU3D, Intersection
+
+
+def deselect_all():
+	"""
+	Function that deselects all the objects in the scene.
+	:return: None
+	"""
+	for obj in bpy.data.objects:
+		obj.select_set(False)
 
 
 def extrude(mesh, height, direction=-1):
@@ -14,8 +33,8 @@ def extrude(mesh, height, direction=-1):
 	:return:
 	"""
 	assert issubclass(height.__class__, int) or \
-	       issubclass(height.__class__, float), "Expected height as a float or " \
-	                                            "an int, got {}".format(type(height))
+		   issubclass(height.__class__, float), "Expected height as a float or " \
+												"an int, got {}".format(type(height))
 	assert direction in [-1, 1], "Expected direction to be -1 or 1, got {}".format(direction)
 
 	mesh.select_set(True)
@@ -66,14 +85,14 @@ def get_min_max(volume, axis):
 	bb_vertices = [Vector(v) for v in volume.bound_box]
 	mat = volume.matrix_world
 	world_bb_vertices = [mat @ v for v in bb_vertices]
-	return min([x[axis:axis+1][0] for x in world_bb_vertices]), \
-	       max([x[axis:axis+1][0] for x in world_bb_vertices])
+	return min([x[axis: axis + 1][0] for x in world_bb_vertices]), \
+		   max([x[axis: axis + 1][0] for x in world_bb_vertices])
 
 def gancio(v1, v2, axis, border1=0, border2=0):
 	"""
 	Function that attaches one volume to another one based on condition.
-	:param v1: volume to attach the other volume to, Volume
-	:param v2: volume to attach to the other volume, Volume
+	:param v1: volume to attach the other volume to, Volume or Module
+	:param v2: volume to attach to the other volume, Volume or Module
 	:param axis: axis along which the volume will be attached, bool, 0 - x axis,
 																	   1 - y axis
 	:param border1: max or min side of the axis, 0 - min, 1 - max
@@ -85,13 +104,151 @@ def gancio(v1, v2, axis, border1=0, border2=0):
 	coords2 = [get_min_max(v2.mesh, 0), get_min_max(v2.mesh, 1)]
 
 	v2.mesh.location[axis] = coords1[axis][border1] + \
-	                         (0.5 * np.diff(coords2[axis]) * mapping[border1])
+							 (0.5 * np.diff(coords2[axis]) * mapping[border1])
 
 	v2.mesh.location[abs(1 - axis)] = coords1[abs(1 - axis)][border2] + \
-	                                  mapping[abs(1 - border2)] * np.diff(coords1[abs(1 - axis)]) + \
-	                                  (0.5 * np.diff(coords2[abs(1-axis)]) * mapping[border2])
+									  mapping[abs(1 - border2)] * np.diff(coords1[abs(1 - axis)]) + \
+									  (0.5 * np.diff(coords2[abs(1-axis)]) * mapping[border2])
+
+def gancio2(v1, v2, axis, border1=0, border2=0):
+	"""
+	Function that attaches one volume to another one based on condition.
+	:param v1: volume to attach the other volume to, Volume or Module
+	:param v2: volume to attach to the other volume, Volume or Module
+	:param axis: axis along which the volume will be attached, bool, 0 - x axis,
+																	   1 - y axis
+	:param border1: max or min side of the axis, 0 - min, 1 - max
+	:param border2: max or min side of the opposite axis, 0 - min, 1 - max
+	:return:
+	"""
+
+	v2.mesh.rotation_euler[2] = 0
+	v2.mesh.location[2] = 0
+	place(v1, v2, axis, border1, border2)
+	_intersections = []
+
+	iou = Intersection(v1, v2)
+
+	for i in range(8):
+
+		# while intersection_check(v1.mesh, v2.mesh):
+		deselect_all()
+		v2.mesh.rotation_euler[2] += np.radians(90)
+		place(v1, v2, axis, border1, border2)
+
+
+		if border2 == 1:
+			v2.mesh.location[abs(1-axis)] += 0.5
+		else:
+			v2.mesh.location[abs(1-axis)] -= 0.5
+
+
+		# inter = intersection_check(v1.mesh, v2.mesh)
+		inter = iou.calculate()
+		if i < 4:
+			_intersections.append(inter)
+		if i >= 4:
+			if inter == min(_intersections):
+				v2.mesh.rotation_euler[2] -= np.radians(360)
+				break
+
+	place(v1, v2, axis, border1, border2)
+
+
+def gancio3(v1, v2, axis, border1=0, border2=0):
+	"""
+	Function that attaches one volume to another one based on condition.
+	:param v1: volume to attach the other volume to, Volume or Module
+	:param v2: volume to attach to the other volume, Volume or Module
+	:param axis: axis along which the volume will be attached, bool, 0 - x axis,
+																	   1 - y axis
+	:param border1: max or min side of the axis, 0 - min, 1 - max
+	:param border2: max or min side of the opposite axis, 0 - min, 1 - max
+	:return:
+	"""
+
+	v2.mesh.rotation_euler[2] = 0
+	place(v1, v2, axis, border1, border2)
+	_intersections = []
+
+	iou = Intersection(v1, v2)
+
+	for i in range(8):
+
+		# while intersection_check(v1.mesh, v2.mesh):
+		deselect_all()
+		v2.mesh.rotation_euler[2] += np.radians(90)
+		place(v1, v2, axis, border1, border2)
+
+		if border2 == 1:
+			v2.mesh.location[abs(1 - axis)] += 0.5
+		else:
+			v2.mesh.location[abs(1 - axis)] -= 0.5
+
+		# inter = intersection_check(v1.mesh, v2.mesh)
+		inter = iou.calculate(i)
+		if i < 4:
+			_intersections.append(inter)
+		if i >= 4:
+			if inter == min(_intersections):
+				v2.mesh.rotation_euler[2] -= np.radians(360)
+				break
+
+	place(v1, v2, axis, border1, border2)
+	if border2 == 1:
+		v2.mesh.location[abs(1-axis)] += 0.5
+	else:
+		v2.mesh.location[abs(1-axis)] -= 0.5
+
+
+def place(v1, v2, axis, border1, border2):
+	mapping = {0: -1, 1: 1}
+	coords1 = [get_min_max(v1.mesh, 0), get_min_max(v1.mesh, 1)]  # volume min max
+	v2.mesh.location[axis] = coords1[axis][border1]  # border1 - front or back
+	v2.mesh.location[abs(1 - axis)] = coords1[abs(1 - axis)][border2] + mapping[
+		abs(1 - border2)] * np.diff(coords1[abs(1 - axis)])  # border2 start or end
+
+
+def intersection_check(v1, v2):
+
+	bm1 = bmesh.new()
+	bm2 = bmesh.new()
+
+	#fill bmesh data from objects
+	bm1.from_mesh(v1.data)
+	bm2.from_mesh(v2.data)
+
+	#fixed it here:
+	bm1.transform(v1.matrix_world)
+	bm2.transform(v2.matrix_world)
+
+	#make BVH tree from BMesh of objects
+	v1_BVHtree = BVHTree.FromBMesh(bm1)
+	v2_BVHtree = BVHTree.FromBMesh(bm2)
+
+	#get intersecting pairs
+	inter = v1_BVHtree.overlap(v2_BVHtree)
+	return inter
 
 def select(_volume):
 	_volume.select_set(True)
 	bpy.context.view_layer.objects.active = _volume
+
+def top_connect(volume, module):
+	"""
+	Function that connects a module to the top of the volume (roof)
+	:param volume: volume to connect the module to
+	:param module: module to connect to the volume
+	:return:
+	"""
+	volume_top = get_min_max(volume.mesh, 2)[1]
+	coords = get_min_max(module.mesh, 2)
+
+	module.mesh.location[2] = volume_top + ((coords[1] - coords[0]) / 2)
+	for axis in range(2):
+		module.mesh.location[axis] = volume.mesh.location[axis]
+
+
+
+
 

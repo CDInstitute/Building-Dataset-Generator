@@ -12,6 +12,7 @@ from blender_utils import *
 from dataset_config import *
 from material import Material
 from module import *
+from overlap_control import OverlapController
 from shp2obj import Collection, deselect_all
 
 
@@ -44,6 +45,7 @@ class Factory:
 		Function that produces a volume based on random parameters.
 		:return: generated volume, Volume
 		"""
+
 		v = Volume(scale=(np.random.randint(self.min_length, self.max_length),
 		                  np.random.randint(self.min_width, self.max_width),
 		                  np.random.randint(self.min_height, self.max_height)))
@@ -101,9 +103,51 @@ class Volume:
 		self.height = float(max(MIN_HEIGHT, scale[2]))
 		self.width = float(max(MIN_WIDTH, scale[0]))
 		self.length = float(max(MIN_LENGTH, scale[1]))
+		self.floor = 2.7 + round(np.random.random(), 1)
 		self.position = location
 		self.name = ''
 		self.mesh = None
+		self.modules = []  # replace with blender hierarchy
+
+	def __copy__(self):
+		position = list(self.mesh.location[:2])
+		position.append(0)
+		v = Volume(scale=(self.width, self.length, self.height),
+		           location=tuple(position))
+		v.create()
+		v.position = self.mesh.location
+		v.mesh.location = self.mesh.location
+		return v
+
+	def add_modules(self):
+		for module_name in list(MODULES.keys()):
+			n = 2
+			prob = 0.75
+			if module_name == 'roof':
+				n = 1
+				prob = 1
+			for axis in range(n):
+				for side in range(n):
+					x_step = np.random.randint(2, 6)
+					if np.random.random() <= prob:
+						module = ModuleFactory().produce(module_name)(volume=self)
+						module.connect(axis=axis, side=side)
+						# if module_name == 'balcony' and self.name.endswith('1') and axis==1 and side == 1:
+						# 	gancio3(self, module, axis, side)
+						# 	raise KeyboardInterrupt
+
+						try:
+							module.apply()
+						except Exception as e:
+							print(repr(e))
+							pass
+
+						mod = ApplierFactory().produce(module_name)(
+							ModuleFactory().mapping[module_name])
+
+						step = (x_step, self.floor)
+						mod.apply(module, step=step, offset=(2.0, 1.0, 2.0, 1.0))
+		# self._check_overlap()
 
 	def apply(self, material):
 		assert isinstance(material, Material), 'Expected Material object, got ' \
@@ -114,14 +158,13 @@ class Volume:
 		material.value.node_tree.nodes['Mapping'].inputs[3].default_value[2] = self.height * 10 # self.width
 		material.value.node_tree.nodes['Mapping'].inputs[3].default_value /= 2
 		self.mesh.active_material = material.value
-		print(material.value.node_tree.nodes['Mapping'].inputs[3].default_value)
 
 	def create(self):
 		"""
 		Function that creates a mesh based on the input parameters.
 		:return:
 		"""
-
+		deselect_all()
 		bpy.ops.mesh.primitive_plane_add(location=self.position)
 		bpy.ops.transform.resize(value=(self.length, self.width, 1.0))
 		bpy.context.selected_objects[0].name = 'volume'
@@ -134,6 +177,13 @@ class Volume:
 		deselect_all()
 		self._triangulate()
 
+	def _check_overlap(self):
+		_controller = OverlapController()
+		for module_name in list(MODULES.keys()):
+			if module_name != 'roof':
+				return 0
+
+
 	def _extrude(self):
 		"""
 		Function that extrudes the plane in order to create a mesh.
@@ -144,10 +194,19 @@ class Volume:
 			extrude(self.mesh, self.height)
 
 	def _nest(self):
-		names = [x.name for x in bpy.data.collections['Building'].objects]
-		if not self.name in names:
-			bpy.data.collections['Building'].objects.link(
-					bpy.data.objects[self.name])
+		deselect_all()
+		names = [x.name for x in bpy.data.collections]
+		if self.name not in names:
+			bpy.data.collections.new(self.name)
+			bpy.data.collections['Building'].children.link(bpy.data.collections[self.name])
+			bpy.data.collections[self.name].objects.link(bpy.data.objects[self.mesh.name])
+			return bpy.data.collections[self.name]
+		# names = [x.name for x in bpy.data.collections['Building'].objects]
+		# if not self.name in names:
+		# 	bpy.data.collections['Building'].objects.link(
+		# 			bpy.data.objects[self.name])
+
+
 
 	def _triangulate(self):
 		deselect_all()
@@ -155,7 +214,6 @@ class Volume:
 			select(self.mesh)
 			bpy.ops.object.modifier_add(type='TRIANGULATE')
 			bpy.ops.object.modifier_apply()
-
 
 
 if __name__ == '__main__':

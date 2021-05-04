@@ -9,7 +9,8 @@ import sys
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 
-from dataset_config import ENGINE, MASK_SAVE, IMG_SAVE, MODULES, IMAGE_SIZE
+from dataset_config import ENGINE, MASK_SAVE, IMG_SAVE, MODULES, IMAGE_SIZE, \
+	DEPTH_SAVE, RENDER_EXR, NORMALS_SAVE
 from shp2obj import deselect_all
 
 
@@ -25,10 +26,17 @@ class Renderer:
 		self._scene_name = bpy.data.scenes[-1].name
 		self.scene = bpy.data.scenes[self._scene_name]
 		self.scene.view_layers["View Layer"].use_pass_object_index = True
+		self.scene.view_layers["View Layer"].use_pass_normal = True
 		# self.scene.render.use_overwrite = False
 		self.scene.render.image_settings.color_mode = 'RGBA'
 		self.scene.render.resolution_x = IMAGE_SIZE[0]
 		self.scene.render.resolution_y = IMAGE_SIZE[1]
+		self.mask_tree = MaskNodeTree(self.mode)
+		self.mask_tree.make()
+		self.depth_tree = DepthTree()
+		self.depth_tree.make()
+		self.norm_tree = NormTree()
+		self.norm_tree.make()
 
 	def render(self, filename='new_mask_test'):
 		"""
@@ -37,12 +45,24 @@ class Renderer:
 		:param filename: name of the file, str
 		:return:
 		"""
-		_ = CustomNodeTree(self.mode).make()
+
 		deselect_all(True)
 		bpy.ops.view3d.camera_to_view_selected()
 		deselect_all()
+		self.mask_tree.connect()
 		self._render(filename)
+
 		self._render_mask(filename)
+		self.depth_tree.connect()
+		bpy.ops.render.render()
+		self._render_depth(filename)
+		if RENDER_EXR:
+			self.depth_tree.connect_root()
+			bpy.ops.render.render()
+			self._render_exr(filename)
+		self.norm_tree.connect()
+		bpy.ops.render.render()
+		self._render_normals(filename)
 
 	def _render_bpycv(self, filename='test'):
 		"""
@@ -61,6 +81,9 @@ class Renderer:
 		Function that renders the scene.
 		:return:
 		"""
+		image_settings = bpy.context.scene.render.image_settings
+		image_settings.file_format = "PNG"
+		image_settings.color_depth = '8'
 		bpy.data.scenes[self._scene_name].render.engine = self.engine
 		bpy.ops.render.render()
 		if not IMG_SAVE in os.listdir():
@@ -68,18 +91,48 @@ class Renderer:
 		bpy.data.images["Render Result"].save_render(
 			'{}/{}.png'.format(IMG_SAVE, filename))
 
+	def _render_depth(self, filename):
+		"""
+		Function that renders the scene as a multichannel mask.
+		:return:
+		"""
+		if len(bpy.data.images) == 0:
+			bpy.ops.render.render()
+		if not DEPTH_SAVE in os.listdir():
+			os.mkdir(DEPTH_SAVE)
+		bpy.data.images["Viewer Node"].save_render(
+			'{}/{}_depth.png'.format(DEPTH_SAVE, filename))
+
+	def _render_exr(self, filename):
+		image_settings = bpy.context.scene.render.image_settings
+		image_settings.file_format = "OPEN_EXR"
+		image_settings.color_depth = '32'
+		bpy.data.images["Viewer Node"].save_render(
+			'{}/{}_depth.exr'.format(DEPTH_SAVE, filename))
+
 	def _render_mask(self, filename):
 		"""
 		Function that renders the scene as a multichannel mask.
 		:return:
 		"""
-		# update materials
 		if len(bpy.data.images) == 0:
 			bpy.ops.render.render()
 		if not MASK_SAVE in os.listdir():
 			os.mkdir(MASK_SAVE)
-		bpy.data.images["Viewer Node"].save_render('{}/{}_mask.png'.format(MASK_SAVE,
-		                                                                   filename))
+		bpy.data.images["Viewer Node"].save_render(
+			'{}/{}_mask.png'.format(MASK_SAVE, filename))
+
+	def _render_normals(self, filename):
+		"""
+		Function that renders the scene as a multichannel mask.
+		:return:
+		"""
+		if len(bpy.data.images) == 0:
+			bpy.ops.render.render()
+		if not NORMALS_SAVE in os.listdir():
+			os.mkdir(NORMALS_SAVE)
+		bpy.data.images["Viewer Node"].save_render(
+			'{}/{}_normals.png'.format(NORMALS_SAVE, filename))
 
 	def _render_keypoints(self):
 		"""
@@ -90,18 +143,43 @@ class Renderer:
 		raise NotImplementedError
 
 
-class CustomNodeTree:
-	def __init__(self, mode=0):
+class Tree:
+	"""
+	Generic compositor tree.
+	"""
+	def __init__(self):
 		"""
 		Class initialization
-		:param mode       segmentation mode: 0 - color, 1 - grayscale, default 0
 		"""
 		self.scene = bpy.data.scenes[0]
 		self.scene.use_nodes = True
 		self.links = self.scene.node_tree.links
 		self.root_node = self.scene.node_tree.nodes["Render Layers"]
-		self.mode = mode
+		if "Viewer" in [x.name for x in self.scene.node_tree.nodes]:
+			self.output_node = self.scene.node_tree.nodes['Viewer']
+		else:
+			self.output_node = self.scene.node_tree.nodes.new(type="CompositorNodeViewer")
+			self.margin = 1200
+			self._place_node(self.output_node, self.root_node, 1)
+		self.output_node.use_alpha = True
+		self.name = 'Result_Node_Name'
 		self.margin = 60
+
+	def connect(self):
+		"""
+		Function that connects the tree output node to the viewer node.
+		:return:
+		"""
+		result_node = self.scene.node_tree.nodes[self.name]
+		field = result_node.outputs.keys()[0]
+		_ = self.links.new(result_node.outputs[field],
+		                   self.output_node.inputs["Image"])
+		for node in self.scene.node_tree.nodes:
+			node.select = False
+		self.output_node.select = True
+		self.scene.node_tree.nodes.active = self.output_node
+		self.output_node.update()
+
 
 	def make(self):
 		"""
@@ -109,24 +187,78 @@ class CustomNodeTree:
 		returns the resulting node.
 		:return: resulting node, node
 		"""
-		return self._build_pass_tree()
+		self.scene.render.engine = ENGINE
+		return self._make()
 
-	def _build_pass_tree(self):
+	def _make(self):
+
+		return True
+
+	def _place_node(self, node, prev_node, axis):
+		"""
+		Function that places a node near the previous one aligned along one axis.
+		:param node: node to place, node
+		:param prev_node: node to refer to, node
+		:param axis: axis to align the node to, bool, 0 - vertical, 1 - horizontal
+		:return:
+		"""
+		if axis == 1:
+			offset = prev_node.width
+		else:
+			offset = prev_node.height
+		node.location[abs(1 - axis)] = prev_node.location[abs(1 - axis)] + offset + self.margin
+		node.location[axis] = prev_node.location[axis]
+
+
+class DepthTree(Tree):
+	def __init__(self):
+		"""
+		Class initialization
+		"""
+		Tree.__init__(self)
+		self.name = "Normalize"
+
+	def connect_root(self):
+		"""
+		Function of a depth tree to get the z data with normalization.
+		:return:
+		"""
+		_ = self.links.new(self.root_node.outputs["Depth"],
+		                   self.output_node.inputs["Image"])
+		for node in self.scene.node_tree.nodes:
+			node.select = False
+		self.output_node.select = True
+		self.scene.node_tree.nodes.active = self.output_node
+		self.output_node.update()
+
+	def _make(self):
+		result_node = self.scene.node_tree.nodes.new(
+			type="CompositorNodeNormalize")
+		_ = self.links.new(self.root_node.outputs["Depth"],
+		                   result_node.inputs["Value"])
+		result_node.update()
+
+
+class MaskNodeTree(Tree):
+	def __init__(self, mode=0):
+		"""
+		Class initialization
+		:param mode       segmentation mode: 0 - color, 1 - grayscale, default 0
+		"""
+		Tree.__init__(self)
+		self.mode = mode
+		self.name = "Mix"
+
+	def _make(self):
 		"""
 		Function that creates a node tree with the necessary outputs to make
 		segmentation masks.
 		:return:
 		"""
-		self.scene.render.engine = ENGINE
+
 		result_node = None
 		for index in range(1, len(MODULES) + 2):
 			result_node = self._material_branch(index, result_node)
-
-		output_node = self.scene.node_tree.nodes.new(type="CompositorNodeViewer")
-		output_node.use_alpha = True
-		_ = self.links.new(result_node.outputs["Image"], output_node.inputs["Image"])
-		self._place_node(output_node, result_node, 1)
-		return output_node
 
 	def _make_add_node(self, node1, node2):
 		"""
@@ -220,23 +352,25 @@ class CustomNodeTree:
 		if result_node:
 			add_node = self._make_add_node(result_node, multiply_node)
 			self._place_node(add_node, multiply_node, 1)
+			self.name = add_node.name
 			return add_node
+		self.name = multiply_node.name
 		return multiply_node
 
-	def _place_node(self, node, prev_node, axis):
-		"""
-		Function that places a node near the previous one aligned along one axis.
-		:param node: node to place, node
-		:param prev_node: node to refer to, node
-		:param axis: axis to align the node to, bool, 0 - vertical, 1 - horizontal
-		:return:
-		"""
-		if axis == 1:
-			offset = prev_node.width
-		else:
-			offset = prev_node.height
-		node.location[abs(1 - axis)] = prev_node.location[abs(1 - axis)] + offset + self.margin
-		node.location[axis] = prev_node.location[axis]
+
+class NormTree(Tree):
+	def __init__(self):
+		Tree.__init__(self)
+		self.name = "Normal"
+
+	def connect(self):
+		_ = self.links.new(self.root_node.outputs["Normal"],
+		                   self.output_node.inputs["Image"])
+		for node in self.scene.node_tree.nodes:
+			node.select = False
+		self.output_node.select = True
+		self.scene.node_tree.nodes.active = self.output_node
+		self.output_node.update()
 
 
 if __name__ == '__main__':
