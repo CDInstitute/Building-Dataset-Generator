@@ -1,5 +1,5 @@
 # Synthetic Dataset Generator
-#### Author: Stanislava Fedorova
+#### Authors: [Stanislava Fedorova](https://www.linkedin.com/in/stanislava-fedorova/), [Alberto Tono](https://www.linkedin.com/in/albertotono3/), [Meher Shashwat Nigam](https://www.linkedin.com/in/mehershashwatnigam/), [Jiayao Zhang](https://www.linkedin.com/in/jiayao-zhang-773045159/), [Amirhossein Ahmadnia](https://www.linkedin.com/in/amirhossein-ahmadnia-4b4bb117b/), [Cecilia bolognesi](https://www.linkedin.com/in/cecilia-bolognesi-99914283/), [Dominik L. Michels](https://www.linkedin.com/in/dominik-l-michels/)
 <img src="imgs/illustration1.gif" width="1000"/>
 
 This is a tool that generates a dataset of synthetic buildings of different typologies. 
