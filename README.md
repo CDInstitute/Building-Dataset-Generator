@@ -88,7 +88,7 @@ Other values to set:
 
 ## Performance
 
-We ran the dataset generation algorithm with different input parameters on Windows 10 OS on CPU and GPU using AMD Ryzen 7 3800-X 8-Core Processor and GeForce GTX 1080.
+We ran the dataset generation algorithm for 100 model samples with different input parameters on Windows 10 OS on CPU and GPU using AMD Ryzen 7 3800-X 8-Core Processor and GeForce GTX 1080.
 Here we report the results for the multiview generation (3 views per model):
 
 | GPU | Multiview | Time (h) |
