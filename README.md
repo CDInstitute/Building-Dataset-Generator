@@ -99,6 +99,20 @@ Here we report the results for the multiview generation (3 views per model):
 |  :white_check_mark:  | :white_check_mark: | 0.8  |
 
 
+
+## Citation
+
+Bibtex format
+
+```
+@inproceedings{fedorova2021synthetic,
+      title={Synthetic 3D Data Generation Pipeline for Geometric Deep Learning in Architecture}, 
+      author={Stanislava Fedorova and Alberto Tono and Meher Shashwat Nigam and Jiayao Zhang and Amirhossein Ahmadnia and Cecilia Bolognesi and Dominik L. Michels},
+      year={2021},
+}
+```
+
+
 ## Generated Image Samples
 
 <img src="imgs/appendix.png" width="1000"/>
