@@ -107,6 +107,8 @@ class Renderer:
 		image_settings = bpy.context.scene.render.image_settings
 		image_settings.file_format = "OPEN_EXR"
 		image_settings.color_depth = '32'
+		if not DEPTH_SAVE in os.listdir():
+			os.mkdir(DEPTH_SAVE)
 		bpy.data.images["Viewer Node"].save_render(
 			'{}/{}_depth.exr'.format(DEPTH_SAVE, filename))
 

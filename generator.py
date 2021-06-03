@@ -118,6 +118,8 @@ class ComposedBuilding:
 			                                                           ext),
 			                         use_selection=False)
 		elif ext == 'ply':
+			if not CLOUD_SAVE in os.listdir():
+				os.mkdir(CLOUD_SAVE)
 			bpy.ops.export_mesh.ply(
 				filepath='{}/{}/{}.{}'.format(file_dir, CLOUD_SAVE, filename, ext),
 				use_selection=False)

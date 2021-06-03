@@ -20,6 +20,8 @@ class PointCloud:
 		self._make(filename)
 
 	def _make(self, filename):
+		if not CLOUD_SAVE in os.listdir():
+			os.mkdir(CLOUD_SAVE)
 		cloud = PyntCloud.from_file("{}/{}.ply".format(CLOUD_SAVE, filename))
 		cloud = cloud.get_sample('mesh_random', n=self.points, rgb=False,
 		                         normals=True, as_PyntCloud=True)

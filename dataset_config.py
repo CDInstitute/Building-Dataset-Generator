@@ -12,7 +12,7 @@ MAX_VOLUMES = 4
 # Choose building typologies to be produced
 BUILDINGS = ['Patio', 'L', 'C', 'Single', 'Closedpatio', 'Equalpatio'] # , 'Skyscraper']
 
-SIZE = 10  # dataset size
+SIZE = 2  # dataset size
 
 use_materials = True  # apply materials to the facades of the buildings, bool
 
@@ -51,4 +51,4 @@ NORMALS_SAVE = 'Normals'
 
 ENGINE = 'CYCLES'
 
-SCRIPT_PATH = open('setup.txt').read()[:-1] # '"D:\ProgramFiles\Anaconda\envs\py37\Lib\site-packages"
+SCRIPT_PATH = open('setup.txt').read()[:-1]
