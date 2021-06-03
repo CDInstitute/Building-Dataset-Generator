@@ -48,6 +48,7 @@ CLOUD_SAVE = 'PointCloud'
 DEPTH_SAVE = 'Depth'
 MODULE_PATH = 'Modules'
 NORMALS_SAVE = 'Normals'
+BLEND_SAVE = 'Blend'  # leave an empty string in case you don't need the .blend files
 
 ENGINE = 'CYCLES'
 

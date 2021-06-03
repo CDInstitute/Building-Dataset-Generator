@@ -80,9 +80,13 @@ class Dataset:
 					renderer.render(filename='building_{}_{}'.format(i, view))
 			building.save(i)
 			building.save(i, ext='ply')
+			if BLEND_SAVE:
+				building.save(i, ext='blend')
 			building.demolish()
 			cloud = PointCloud()
 			cloud.make(i)
+
+
 		print('Whole process took: {}'.format(time() - s))
 
 	def write(self):

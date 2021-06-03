@@ -126,6 +126,11 @@ class ComposedBuilding:
 			bpy.ops.export_mesh.ply(
 				filepath='{}/{}/{}_p.{}'.format(file_dir, CLOUD_SAVE, filename,
 				                              ext), use_selection=False)
+		elif ext == 'blend':
+			if not BLEND_SAVE in os.listdir():
+				os.mkdir(BLEND_SAVE)
+			bpy.ops.wm.save_as_mainfile(filepath='{}/{}.blend'.format(BLEND_SAVE,
+			                                                          filename))
 		else:
 			return NotImplementedError
 
