@@ -1,12 +1,27 @@
 # Synthetic Dataset Generator
-#### Author: Stanislava Fedorova
-<img src="imgs/illustration.gif" width="1000"/>
 
-This is a tool that generates a dataset of synthetic buildings of different typologies. The generated data includes:
+<img src="imgs/illustration1.gif" width="1000"/>
+
+#### Authors: 
+* [Stanislava Fedorova](https://www.linkedin.com/in/stanislava-fedorova/)
+* [Alberto Tono](https://www.linkedin.com/in/albertotono3/)
+* [Meher Shashwat Nigam](https://www.linkedin.com/in/mehershashwatnigam/)
+* [Jiayao Zhang](https://www.linkedin.com/in/jiayao-zhang-773045159/)
+* [Amirhossein Ahmadnia](https://www.linkedin.com/in/amirhossein-ahmadnia-4b4bb117b/)
+* [Cecilia bolognesi](https://www.linkedin.com/in/cecilia-bolognesi-99914283/)
+* [Dominik L. Michels](https://www.linkedin.com/in/dominik-l-michels/)
+
+This is a tool that generates a dataset of synthetic buildings of different typologies. 
+
+[Arxiv](https://arxiv.org/pdf/2104.12564v1.pdf) [Website](https://cdinstitute.github.io/Building-Dataset-Generator/) [Samples](https://drive.google.com/drive/folders/1_D9nuNd9VXjzdqMoKIqrET7yiq21uZv6?usp=sharing)
+
+The generated data includes:
 
 * Mesh files of generated buildings, ```.obj``` format
 * Rendered images of the mesh, ```.png``` format
 * Rendered segmentation masks, ```.png``` format
+* Depth annotation, ```.png``` and  ```.exr``` format
+* Surface normals annotation, ```.png``` format
 * Point cloud files, ```.ply``` format (the number of points by default is 2048, can be changed in ```dataset_config.py```)
 
 ## How To Use
@@ -16,16 +31,24 @@ This is a tool that generates a dataset of synthetic buildings of different typo
 ```
 git clone https://github.com/CDInstitute/CompoNET
 ```
-*Navigate to the ```dataset``` folder.
-
-## Synthetic Buildings
+*Navigate to the ```Building-Dataset-Generator``` folder.
+```
+pip install -r requirements.txt
+```
 
 To create completely synthetic buildings use:
 
 ```
+run.bat
+```
+
+Or:
+
+```
 blender setup.blend --python dataset.py
 ```
-Unfortunately, it is not possible to use Blender in background mode as it will not render the image masks.
+
+Unfortunately, it is not possible to use Blender in background mode as it will not render the image masks correctly.
 
 Note:
 all the parameters related to the dataset (including any specific parameters for your buildings (e.g. max and min height / width / length)) are to be provided in ```dataset_config.py```. Default values adhere to international standards (min) and most common European values (max):
@@ -35,9 +58,12 @@ all the parameters related to the dataset (including any specific parameters for
 * maximum length, width, height 30 m
 Other values to set:
 * number of dataset samples
+* building types
+* component materials
 * rendered image dimensions
 * number of points in the point clouds
 * paths to store the generated data
+* option to save the .exr files
 
 ### Annotation structure
 
@@ -60,19 +86,33 @@ Other values to set:
  'bbox': [0.0, 0.0, 0.0, 0.0],
  'material': ['concrete', 'brick']}
 
-## Buildings from the existing .shp files:
+## Performance
 
-<img src="imgs/qgis_example1.png" width="900"/>
+We ran the dataset generation algorithm for 100 model samples with different input parameters on Windows 10 OS on CPU and GPU using AMD Ryzen 7 3800-X 8-Core Processor and GeForce GTX 1080.
+Here we report the results for the multiview generation (3 views per model):
 
-Use provided .gltf (or your own) to create separate .obj files for each building in .gltf:
+| GPU | Multiview | Time (h) |
+| ------------- | ------------- | ------------- |
+|   |   |  1.7 |
+|   | :white_check_mark:  |  2.7 |
+|  :white_check_mark:  |  | 0.34  |
+|  :white_check_mark:  | :white_check_mark: | 0.8  |
+
+
+
+## Citation
+
+Bibtex format
+
 ```
-blender --background setup.blend --python shp2obj.py your_file.gltf
+@inproceedings{fedorova2021synthetic,
+      title={Synthetic 3D Data Generation Pipeline for Geometric Deep Learning in Architecture}, 
+      author={Stanislava Fedorova and Alberto Tono and Meher Shashwat Nigam and Jiayao Zhang and Amirhossein Ahmadnia and Cecilia Bolognesi and Dominik L. Michels},
+      year={2021},
+}
 ```
-For now there is a manual process to convert shapefiles to .gltf format due to inaccuracies in Qgis2threejs library (will be fixed later):
-* Load your .shp file into [QGis](https://www.qgis.org/en/site/)
-* Indicate your height field as a z-dimension in ```Properties -> ```
-* [Install](https://qgis2threejs.readthedocs.io/en/docs/Tutorial.html#install-the-plugin) Qgis2threejs plugin if you do not have it yet
-* Select the buildings that interest you, make sure not to choose too many, as you might not have enough RAM
-* ```Web -> Qgis2threejs -> choose your layer```
-* ```Right click on the layer -> Properties -> height -> choose your height field```
-* ```File -> Save Scene As -> .gltf```
+
+
+## Generated Image Samples
+
+<img src="imgs/appendix.png" width="1000"/>
