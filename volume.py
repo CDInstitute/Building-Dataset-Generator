@@ -142,8 +142,10 @@ class Volume:
 							print(repr(e))
 							pass
 
-						mod = ApplierFactory().produce(module_name)(
-							ModuleFactory().mapping[module_name])
+						module_type = ModuleFactory().mapping[module_name]
+						if isinstance(module_type, list):
+							module_type = module_type[0]
+						mod = ApplierFactory().produce(module_name)(module_type)
 
 						step = (x_step, self.floor)
 						mod.apply(module, step=step, offset=(2.0, 1.0, 2.0, 1.0))

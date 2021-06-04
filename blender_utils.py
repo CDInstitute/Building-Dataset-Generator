@@ -247,6 +247,12 @@ def top_connect(volume, module):
 	module.mesh.location[2] = volume_top + ((coords[1] - coords[0]) / 2)
 	for axis in range(2):
 		module.mesh.location[axis] = volume.mesh.location[axis]
+	# check
+	coords = get_min_max(module.mesh, 2)
+	if coords[0] > volume_top:
+		module.mesh.location[2] -= coords[0] - volume_top
+
+
 
 
 

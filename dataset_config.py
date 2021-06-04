@@ -12,7 +12,7 @@ MAX_VOLUMES = 4
 # Choose building typologies to be produced
 BUILDINGS = ['Patio', 'L', 'C', 'Single', 'Closedpatio', 'Equalpatio'] # , 'Skyscraper']
 
-SIZE = 2  # dataset size
+SIZE = 5  # dataset size
 
 use_materials = True  # apply materials to the facades of the buildings, bool
 
@@ -38,7 +38,7 @@ RENDER_EXR = False  # change for True if you want an .exr depth map
 
 RANDOMIZE_TEXTURES = False  # randomization of textures per every additional view
 
-RENDER_VIEWS = 2
+RENDER_VIEWS = 3
 
 IMAGE_SIZE = (500, 500)
 MODEL_SAVE = 'Models'
@@ -48,7 +48,7 @@ CLOUD_SAVE = 'PointCloud'
 DEPTH_SAVE = 'Depth'
 MODULE_PATH = 'Modules'
 NORMALS_SAVE = 'Normals'
-BLEND_SAVE = 'Blend'  # leave an empty string in case you don't need the .blend files
+BLEND_SAVE = ''  # leave an empty string in case you don't need the .blend files
 
 ENGINE = 'CYCLES'
 

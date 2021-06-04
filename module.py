@@ -264,7 +264,8 @@ class Roof(Module):
 	             scale: tuple=(1.0, 1.0, 1.0), mesh=None,
 	             volume=None):
 		Module.__init__(self, name, scale, mesh, volume=volume)
-		self._triangulate()
+		if isinstance(self, Roof):
+			self._triangulate()
 		self.y_offset = 1.0
 
 	def position(self, position):
@@ -277,6 +278,7 @@ class Roof(Module):
 						1 + np.random.uniform(0, 0.2))
 			self.scale[1] = np.diff(get_min_max(self.volume.mesh, 1))[0] * (
 						1 + np.random.uniform(0, 0.2))
+		deselect_all()
 		bpy.ops.mesh.primitive_cube_add(size=1.0)
 		bpy.ops.transform.resize(value=self.scale)
 		bpy.context.selected_objects[0].name = self.name
@@ -291,6 +293,51 @@ class Roof(Module):
 			top_connect(self.module.volume, self.module)
 
 
+class SlopedRoof(Roof):
+	def __init__(self, name: str='roof',
+	             scale: tuple=(1.0, 1.0, 1.0), mesh=None,
+	             volume=None):
+		Roof.__init__(self, name, scale, mesh, volume=volume)
+
+	def _create(self):
+		if self.scale == (1.0, 1.0, 1.0):
+			self.scale = list((1, 1, np.random.uniform(0.3, 0.8)))
+			self.scale[0] = np.diff(get_min_max(self.volume.mesh, 0))[0] * (
+						1 + np.random.uniform(0, 0.2))
+			self.scale[1] = np.diff(get_min_max(self.volume.mesh, 1))[0] * (
+						1 + np.random.uniform(0, 0.2))
+		deselect_all()
+		bpy.ops.mesh.primitive_cube_add(size=1.0)
+		bpy.ops.transform.resize(value=self.scale)
+		bpy.context.selected_objects[0].name = self.name
+		_name = bpy.context.selected_objects[0].name
+
+		mesh = bmesh.new()
+		mesh.from_mesh(bpy.data.objects[_name].data)
+		for face in mesh.faces[:]:
+			if face.normal[2] == 1:
+				break
+		geom = face.edges[:] + face.verts[:] + [face]
+		offset = np.random.randint(25, 50)
+		_ = bmesh.ops.bevel(mesh, geom=geom, affect='EDGES',
+		                                      offset_type='PERCENT',
+		                                      offset=offset,
+		                                      segments=1)
+		for face in mesh.faces[:]:
+			if face.normal[2] == 1:
+				verts = [x.co for x in face.verts[:]]
+				if abs(sum(verts[1] - verts[0])) == abs(sum(verts[3] - verts[2])):
+					if abs(sum(verts[2] - verts[1])) == abs(sum(verts[0] - verts[3])):
+						break
+		uplift = np.random.uniform(0.5, 5.0)
+		for v in face.verts[:]:
+			v.co[2] += uplift
+
+		mesh.to_mesh(bpy.data.objects[_name].data)
+		return bpy.data.objects[_name]
+
+
+
 class ModuleFactory:
 	"""
 	Factory that produces volumes.
@@ -299,7 +346,7 @@ class ModuleFactory:
 		self.mapping = {'generic': Module,
 		                'window': Window,
 		                'balcony': Balcony,
-		                'roof': Roof
+		                'roof': [Roof, SlopedRoof]
 		                }
 		self.mapping = {x: y for x, y in self.mapping.items() if x in MODULES or x == 'generic'}
 		self.mask_colors = list(range(len(self.mapping)))
@@ -312,6 +359,8 @@ class ModuleFactory:
 		"""
 		if name in list(self.mapping.keys()):
 			# mask = self.mask_colors[list(self.mapping.keys()).index(name)]
+			if isinstance(self.mapping[name], list):
+				return np.random.choice(self.mapping[name], 1)[0]
 			return self.mapping[name]
 		else:
 			return self.mapping['generic']
@@ -354,7 +403,7 @@ class ModuleApplier:
 
 	def _apply(self, module, **args):
 		assert issubclass(module.__class__,
-		                  self.module_type), "This ModuleApplier is applicable" \
+			                  self.module_type), "This ModuleApplier is applicable" \
 		                                     " only to {], got {}".format(self.module_type,
 		                                                                  type(module))
 		if 'position' in list(args.keys()):
