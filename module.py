@@ -203,6 +203,128 @@ class Window(Module):
 			self.module.mesh.location[2] = 0
 
 
+class ParametricWindow(Window):
+	def __init__(self, name: str='window', scale: tuple=(1.5, 0.04, 1.5), mesh=None,
+	             volume=None):
+		self.h_bars = np.random.randint(0, 5)
+		self.v_bars = np.random.randint(0, 5)
+		Module.__init__(self, name, scale, mesh, volume=volume)
+		self._triangulate()
+		self.y_offset = 1.0
+
+	def apply(self):
+		_material = MaterialFactory().produce('metall')
+		self.mesh.active_material = _material.value
+
+		bpy.ops.object.editmode_toggle()
+		_mesh = bmesh.from_edit_mesh(self.mesh.data)
+		self._select_faces(_mesh)
+		_glass = MaterialFactory().produce('glass')
+		deselect_all()
+		select(self.mesh)
+
+		self.mesh.data.materials.append(_glass.value)
+
+		for face in _mesh.faces:
+			if face.select:
+				face.material_index = 1
+		bpy.ops.object.editmode_toggle()
+
+	def _create(self):
+		bpy.ops.mesh.primitive_cube_add(size=1.0)
+		bpy.context.selected_objects[0].name = self.name
+		self.mesh = bpy.context.selected_objects[0]
+		select(self.mesh)
+		bpy.ops.object.editmode_toggle()
+		bpy.ops.transform.resize(value=self.scale)
+
+		if self.h_bars > 0:
+			self._cut()
+		if self.v_bars > 0:
+			self._cut(axis=4)
+
+		_mesh = bmesh.from_edit_mesh(self.mesh.data)
+
+		self._inset(_mesh)
+		self._extrude(_mesh)
+
+		bpy.ops.object.editmode_toggle()
+
+		return self.mesh
+
+	def _cut(self, axis=1):
+		# axis = 0 horizontal loops
+		# axis = 4 vertical loops
+		if axis == 1:
+			_bars = self.h_bars
+		else:
+			axis = 4
+			_bars = self.v_bars
+		_dict = self._setup()
+		bpy.ops.mesh.loopcut_slide(_dict,
+		                           MESH_OT_loopcut={"number_cuts": _bars,
+		                                            "smoothness": 0,
+		                                            "falloff": 'INVERSE_SQUARE',
+		                                            "object_index": 0,
+		                                            # Was 'INVERSE_SQUARE' that does not exist
+		                                            "edge_index": axis,
+		                                            "mesh_select_mode_init": (
+		                                            True, False, False)},
+		                           TRANSFORM_OT_edge_slide={"value": 0,
+		                                                    "mirror": False,
+		                                                    "snap": False,
+		                                                    "snap_target": 'CLOSEST',
+		                                                    "snap_point": (
+		                                                    0, 0, 0),
+		                                                    "snap_align": False,
+		                                                    "snap_normal": (
+		                                                    0, 0, 0),
+		                                                    "correct_uv": False,
+		                                                    "release_confirm": False,
+		                                                    "use_accurate": False})
+
+	def _extrude(self, _mesh):
+		self._select_faces(_mesh)
+		bpy.ops.mesh.extrude_faces_move(TRANSFORM_OT_shrink_fatten={"value": -0.01,
+		                                                            "use_even_offset":True,
+		                                                            "mirror":False,
+		                                                            "snap":False,
+		                                                            "snap_target":'CLOSEST',
+		                                                            "snap_point":(0, 0, 0),
+		                                                            "snap_align":False,
+		                                                            "snap_normal":(0, 0, 0),
+		                                                            "release_confirm":False})
+
+	def _inset(self, _mesh):
+		self._select_faces(_mesh)
+
+		bpy.ops.mesh.inset(use_boundary=False, use_even_offset=False,
+		                   use_relative_offset=True, thickness=np.random.uniform(0.01, 0.1),
+		                   depth=0, use_outset=False,
+		                   use_individual=True)
+
+	def _select_faces(self, _mesh):
+
+		faces = sorted([x for x in _mesh.faces], reverse=True,
+		               key=lambda x: x.calc_area())
+		for f in faces:
+			f.select = False
+
+		for f in faces[:max(1, self.h_bars + 1) * max(1, self.v_bars + 1) * 2]:
+			f.select = True
+
+	def _setup(self):
+		area = [x for x in bpy.context.window.screen.areas if x.type == 'VIEW_3D'][0]
+		space = area.spaces[0]
+		region = [x for x in area.regions if x.type =='WINDOW'][0]
+		return {'scene':  bpy.context.scene,
+		        'region' : region,
+		        'area'   : area,
+		        'space'  : space}
+
+
+
+
 class Balcony(Module):
 	def __init__(self, name: str='balcony', scale: tuple=(1.0, 1.0, 1.0), mesh=None,
 	             volume=None):
@@ -337,6 +459,29 @@ class SlopedRoof(Roof):
 		return bpy.data.objects[_name]
 
 
+class Door(Module):
+	def __init__(self, name: str='door', scale: tuple=(1.2, 0.07, 2.5), mesh=None,
+	             volume=None):
+		Module.__init__(self, name, scale, mesh, volume=volume)
+		self._triangulate()
+		self.h_bars = np.random.randint(1, 5)
+		self.v_bars = np.random.randint(0, 5)
+		self.y_offset = 1.0
+
+	def _create(self):
+		bpy.ops.mesh.primitive_cube_add(size=1.0)
+		bpy.ops.transform.resize(value=self.scale)
+		bpy.context.selected_objects[0].name = self.name
+		return bpy.context.selected_objects[0]
+
+	class ModuleConnector(Connector):
+		def __init__(self, module: Module, axis: bool, side):
+			Connector.__init__(self, module, axis, side=side)
+
+		def _connect(self):
+			select(self.module.mesh)
+			top_connect(self.module.volume, self.module)
+
 
 class ModuleFactory:
 	"""
@@ -344,7 +489,7 @@ class ModuleFactory:
 	"""
 	def __init__(self):
 		self.mapping = {'generic': Module,
-		                'window': Window,
+		                'window': ParametricWindow,
 		                'balcony': Balcony,
 		                'roof': [Roof, SlopedRoof]
 		                }
